@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,6 +89,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -95,12 +99,31 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+      // Pull CS low to start SPI communication
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
-    /* USER CODE BEGIN 3 */
+      uint8_t transmit[3] = {1, 0x40, 0};  // Start bit + single-ended channel 0
+      uint8_t receive[3] = {0};
+
+      HAL_SPI_TransmitReceive(&hspi1, transmit, receive, 3, 20);
+
+      // Pull CS high to end SPI communication
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+
+      // Extract 10-bit ADC data
+      uint16_t data = (receive[2]) | ((receive[1] & 0x03) << 8);
+
+      // Map ADC reading (0-1023) to PWM duty cycle (3200 to 6400)
+      float pwm = ((float)data / 1023) * 3200 + 3200;
+
+      // Set PWM compare register (channel 1)
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)pwm);
+
+      HAL_Delay(10);  // 50Hz update rate
   }
   /* USER CODE END 3 */
 }
+
 
 /**
   * @brief System Clock Configuration
