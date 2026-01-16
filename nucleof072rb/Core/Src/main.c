@@ -105,7 +105,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	  tx[0] = 0x01;
-	  tx[1] = (0x08 | 0x00) << 4;
+	  tx[1] = 0x80;
 	  tx[2] = 0x00;
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
@@ -200,3 +200,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
